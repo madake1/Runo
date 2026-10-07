@@ -35,5 +35,8 @@ google-services.json
 
 .vs
 .vscode
-pyexperiments/__pycache__/
-.gitignore
+out/
+__pycache__/
+*.py[cod]
+.venv/
+python/runs/

@@ -1,0 +1,13 @@
+* text=auto
+*.md text eol=crlf
+*.cpp text eol=crlf
+*.h text eol=crlf
+*.hpp text eol=crlf
+*.txt text eol=crlf
+*.cmake text eol=crlf
+*.json text eol=crlf
+*.py text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+.editorconfig text eol=lf
+*.pt binary

@@ -1,4 +1,4 @@
-"""Webcam demo: python pyexperiments/camera_demo.py --camera 0"""
+"""Webcam demo: python python/camera_demo.py --camera 0"""
 
 import argparse
 import time
