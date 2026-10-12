@@ -136,6 +136,7 @@ VLM · Vision-Language Interaction · Local AI
 - [x] 摄像头实时目标检测
 - [x] 绘制类别、置信度与检测框
 - [x] 整理 Python 模型实验代码结构（摄像头 / 检测器 / 绘制分离）
+- [ ] 新增各种模型接入，包括EfficientNet-B0、MobileNetV3
 
 ---
 
@@ -143,7 +144,7 @@ VLM · Vision-Language Interaction · Local AI
 
 让模型离开 Python。
 
-- [ ] 导出 YOLO 模型至 ONNX
+- [ ] 导出 各个 模型至 ONNX
 - [ ] C++ 加载模型
 - [ ] OpenCV 图像预处理
 - [ ] C++ 模型推理

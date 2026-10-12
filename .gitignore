@@ -39,4 +39,7 @@ out/
 __pycache__/
 *.py[cod]
 .venv/
-python/runs/
+python/runs/*
+!python/runs/README.md
+python/data/*
+!python/data/README.md

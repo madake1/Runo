@@ -1,21 +1,22 @@
-# Python 模型实验
+# Python 分类训练框架
 
-建议使用独立虚拟环境。在仓库根目录执行（Windows PowerShell）：
+用于手写和学习 PyTorch 分类训练流程，并比较不同模型，后续导出模型供 C++ 和 Android 推理使用。
 
-```powershell
-python -m venv python/.venv
-python/.venv/Scripts/python.exe -m pip install -r python/requirements.txt
-python/.venv/Scripts/python.exe python/camera_demo.py --camera 0
-```
+## 目录职责
 
-需要 Python 3.10 或以上版本，以及可用的摄像头。按 Q 或 Esc 退出；摄像头索引不正确时尝试 `--camera 1`。
+- `configs/`：实验配置，例如模型名称、数据路径、学习率和训练轮数。
+- `data/`：数据文件，包括原始图片、标注和数据划分。
+- `datasets/`：数据读取、Dataset 和图像增强代码。
+- `models/`：模型构建、预训练权重加载和分类头适配代码。
+- `losses/`：自定义损失函数代码。
+- `metrics/`：分类评估指标代码。
+- `runs/`：按实验保存配置、日志、指标和模型权重。
 
-- `camera_demo.py`：摄像头读取、检测循环及 FPS 计算。
-- `detector.py`：加载模型并解析检测结果。
-- `display.py`：绘制检测框、类别、置信度和 FPS。
-- `models/yolo11n.pt`：当前使用的预训练 COCO 模型。
-- `models/yolov8s-worldv2.pt`：已有实验权重，当前入口未使用。
+## 后续手写的入口
 
-模型路径相对于本目录解析，不依赖启动时的工作目录。缺少当前权重时 Ultralytics 会尝试下载；首次安装依赖也需要网络。
+- `train.py`：组装配置、数据、模型和优化器，启动训练。
+- `engine.py`：每轮训练与验证逻辑，供不同模型复用。
+- `evaluate.py`：加载权重，在指定数据集上独立评估。
+- `predict.py`：加载权重，预测单张图片。
 
-目前没有独立图片检测、训练或 ONNX 导出脚本。此环境仅用于实验，不参与 C++ 编译或 Android 打包。后续通过导出的模型和明确的输入输出约定与 C++ 对接。
+这些 Python 文件目前尚未创建。先跑通一个模型，再逐步补齐功能。
