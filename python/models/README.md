@@ -1,9 +1,9 @@
-# 模型接入
+# 检测模型接入
 
-放置模型构建、预训练权重加载、分类头替换和主干冻结/解冻代码。
+放置检测模型构建、预训练权重加载、类别预测头替换和主干冻结/解冻代码。
 
-开始可以在 `network.py` 中统一提供 `build_model(name, num_classes, pretrained)`，逐步接入 MobileNetV3-Small、MobileNetV3-Large 和 EfficientNet-B0。
+`network.py` 提供 `build_model(name, num_classes, pretrained)`，接入 SSDlite320 MobileNetV3-Large 和 Faster R-CNN MobileNetV3 320 FPN。`num_classes` 为前景数，内部增加背景类别。
 
-分类模型统一接收 `[B, C, H, W]` 图像张量，返回 `[B, num_classes]` 原始 logits，方便复用训练循环。使用 CrossEntropyLoss 时，模型输出不提前做 softmax。
+检测模型接收图像张量列表。训练时传入 target 列表，返回损失字典；推理时返回每张图的 boxes、labels、scores，框为原图像素 xyxy。模型内部负责归一化和 NMS。
 
 训练生成的权重放在 `runs/` 对应实验目录中。

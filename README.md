@@ -2,6 +2,12 @@
 
 > **Let me run!**
 
+## 当前更新：蜂糖李病害检测框架
+
+Python 已转向手写 PyTorch 检测训练流程，目标是贵州蜂糖李果实/叶片病害定位，预留视频逐帧接口。支持 SSDlite320 MobileNetV3 与 Faster R-CNN MobileNetV3，对应训练、验证、断点恢复、独立评估和单图预测入口。
+
+公开 PlantDoc 检测数据仅用于学习工程流程，不包含蜂糖李，也不是精细病斑标注。真实蜂糖李数据需要采集并确认类别。使用现有 `conda activate Runo` 环境；运行说明见 [Python 框架](python/README.md)，数据调研见 [调研记录](docs/dataset-research.md)。下方早期路线图中的 Python 摄像头/YOLO 状态为历史记录，当前 Python 实现以该说明为准。
+
 Runo 是一个用于学习 **C++、计算机视觉、模型推理与端侧 AI 部署** 的长期个人项目。
 
 项目以农业视觉为主要应用场景，从最基础的摄像头与目标检测开始，逐步完成从 **模型训练 → 模型导出 → C++ 推理 → 端侧优化 → Android 部署 → 多模态视觉应用** 的完整 AI 工程链路。
@@ -38,11 +44,13 @@ Runo/
 │   ├── src/main.cpp           # 摄像头入口
 │   └── examples/              # 早期学习代码，不参与默认构建
 ├── python/                    # Python 模型实验，使用独立环境
-│   ├── camera_demo.py
-│   ├── detector.py
-│   ├── display.py
+│   ├── train.py               # 手写检测训练入口
+│   ├── evaluate.py            # 独立评估
+│   ├── predict.py             # 单图病害目标检测
+│   ├── datasets/              # 每个数据集独立适配器
+│   ├── data/                  # 每个数据集独立数据目录
 │   ├── requirements.txt
-│   └── models/                # 当前实验使用的 .pt 权重
+│   └── models/                # 检测模型构建代码，权重保存在 runs/
 ├── android/                   # 最终 App 的预留位置，目前仅有说明
 ├── docs/                      # 学习资料和历史提示
 ├── CMakeLists.txt             # VS 桌面构建入口，委托 cpp/
@@ -70,13 +78,13 @@ CMake 配置成功不代表已生成可执行文件；构建后程序位于 `out
 
 ### Python
 
-环境创建、依赖安装和摄像头启动命令见 [Python 说明](python/README.md)。现有入口使用 YOLO11n 的 COCO 预训练权重，尚未进行农业数据训练；目录中的 YOLO-World 权重未被当前入口使用。
+使用 `conda activate Runo`。数据准备、检测训练、评估和图片推理命令见 [Python 说明](python/README.md)。当前使用 PlantDoc 学习检测流程，尚无真实蜂糖李数据；此前的 Python YOLO 摄像头入口已移除。
 
 ### 最终 Android App
 
 [Android 目录](android/README.md) 当前只是规划占位，没有 Gradle 工程或 APK。后续以 Kotlin 实现界面和摄像头输入，通过 JNI 调用 C++ 推理库。桌面窗口与摄像头代码留在桌面端，模型实验通过导出模型与运行时对接。
 
-下面的技术栈与路线图包含未来计划，不代表仓库已实现。当前未包含模型训练、ONNX 导出、C++ 模型推理、量化或移动端代码。`docs/initial-learning-prompt.md` 是历史资料。
+下面路线图包含早期计划和历史记录。当前 Python 已包含检测训练与评估；尚未实现 ONNX 导出、C++ 模型推理、量化或移动端代码。
 
 ---
 
@@ -254,13 +262,13 @@ Runo 当前主要是一个 **AI Engineering Playground**。
 
 **Python**
 
-`Camera → YOLO11n (COCO) → Detection → Visualization + FPS`
+`PlantDoc / 自采标注 → COCO → PyTorch 检测训练 → 评估 → 图片预测`
 
 下一阶段：
 
-**让 YOLO 离开 Python。**
+**验证蜂糖李真实数据，并打通模型部署。**
 
-`YOLO → ONNX → C++ → OpenCV → Real-time Inference`
+`蜂糖李标注 → 训练与评估 → 导出与算子验证 → C++ → Android`
 
 ---
 

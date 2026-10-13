@@ -41,5 +41,7 @@ __pycache__/
 .venv/
 python/runs/*
 !python/runs/README.md
-python/data/*
-!python/data/README.md
+# 数据按数据集分目录，跟踪各目录说明，忽略图片与生成标注。
+python/data/**
+!python/data/**/
+!python/data/**/README.md

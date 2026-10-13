@@ -1,2 +1,6 @@
-ultralytics
-opencv-python
+# 在 conda activate Runo 后安装；torch/torchvision 必须使用互相兼容的版本。
+torch>=2.6,<3
+torchvision>=0.21,<0.30
+Pillow>=10
+numpy>=1.26
+PyYAML>=6
