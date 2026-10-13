@@ -4,3 +4,6 @@ torchvision>=0.21,<0.30
 Pillow>=10
 numpy>=1.26
 PyYAML>=6
+rich>=13.9,<16
+lightning-fabric>=2.5,<3
+tensorboard>=2.18,<3

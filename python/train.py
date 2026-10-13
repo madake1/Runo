@@ -1,5 +1,6 @@
 """训练入口。阅读顺序：配置 -> Dataset -> 模型 -> engine -> checkpoint。"""
 import argparse
+import logging
 import random
 from datetime import datetime
 from pathlib import Path
@@ -12,11 +13,14 @@ from torch.utils.data import DataLoader
 from datasets.coco import DetectionDataset, collate_fn
 from engine import evaluate, train_one_epoch
 from models.network import build_model, freeze_backbone
+from training_log import TrainingLog, setup_logging, console
 from utils import (BASE, choose_device, load_checkpoint, load_config,
                    save_checkpoint, seed_everything, seed_worker, write_json)
 
 
 def main():
+    log = setup_logging()
+    log.info("Loading configuration, datasets and model…")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=BASE / "configs/plantdoc_ssdlite.yaml")
     parser.add_argument("--resume", type=Path)
@@ -91,38 +95,57 @@ def main():
     (run / "config.yaml").write_text(yaml.safe_dump(config, allow_unicode=True), encoding="utf-8")
     write_json(run / "classes.json", {str(i+1): name for i, name in enumerate(classes)})
     write_json(run / "environment.json", {"torch": str(torch.__version__), "device": str(device)})
-    print(f"Run: {run}\nDevice: {device}, classes: {len(classes)}", flush=True)
-    for epoch in range(start, config["epochs"]):
-        frozen = epoch < config["freeze_backbone_epochs"]
-        freeze_backbone(model, frozen)
-        loss = train_one_epoch(model, train_loader, optimizer, device, scaler,
-                               amp=amp, freeze_bn=config["freeze_bn"] or frozen, max_steps=args.max_steps)
-        metrics = evaluate(model, val_loader, device, classes, max_steps=args.max_steps)
-        score = metrics["map_50_95_simple"]
-        improved = score > best
-        best = max(best, score)
-        lr = optimizer.param_groups[0]["lr"]
-        scheduler.step()
-        state = np.random.get_state()
-        checkpoint = {"model": model.state_dict(), "model_name": config["model"], "classes": classes,
-                      "optimizer": optimizer.state_dict(), "scheduler": scheduler.state_dict(),
-                      "scaler": scaler.state_dict(), "epoch": epoch, "best_metric": best,
-                      "config": config, "torch_rng": torch.get_rng_state(),
-                      "loader_rng": generator.get_state(), "python_rng": random.getstate(),
-                      "numpy_rng": (state[0], state[1].tolist(), state[2], state[3], state[4]),
-                      "cuda_rng": torch.cuda.get_rng_state_all() if device.type == "cuda" else None}
-        save_checkpoint(run / "last.pt", checkpoint)
-        if improved:
-            save_checkpoint(run / "best.pt", checkpoint)
-        record = {"epoch": epoch+1, "lr": lr, "loss": loss, "validation": metrics,
-                  "partial_smoke_check": bool(args.max_steps)}
-        with (run / "metrics.jsonl").open("a", encoding="utf-8") as stream:
-            import json
-            stream.write(json.dumps(record, ensure_ascii=False) + "\n")
-        print(f"Epoch {epoch+1}: loss={loss['total']:.4f}, AP50={metrics['map_50']:.4f}, "
-              f"AP50:95(simple)={score:.4f}", flush=True)
-    print(f"Finished. Checkpoints: {run}", flush=True)
+    reporter = TrainingLog(run, config, device, len(train_set), len(val_set), len(classes), start)
+    steps_per_epoch = min(len(train_loader), args.max_steps) if args.max_steps else len(train_loader)
+    global_step = checkpoint.get("global_step", start * steps_per_epoch) if checkpoint else 0
+    if args.max_steps:
+        reporter.log.warning("SMOKE CHECK: limited to %d batches per phase; metrics are partial", args.max_steps)
+    with reporter:
+        for epoch in range(start, config["epochs"]):
+            frozen = epoch < config["freeze_backbone_epochs"]
+            freeze_backbone(model, frozen)
+            reporter.log.info("Epoch %d/%d | backbone %s", epoch+1, config['epochs'], "frozen" if frozen else "unfrozen")
+            loss = train_one_epoch(model, train_loader, optimizer, device, scaler,
+                                   amp=amp, freeze_bn=config["freeze_bn"] or frozen, max_steps=args.max_steps,
+                                   reporter=reporter, epoch=epoch+1, global_step=global_step)
+            global_step += steps_per_epoch
+            metrics = evaluate(model, val_loader, device, classes, max_steps=args.max_steps,
+                               reporter=reporter, epoch=epoch+1)
+            score = metrics["map_50_95_simple"]
+            improved = score > best
+            best = max(best, score)
+            lr = optimizer.param_groups[0]["lr"]
+            scheduler.step()
+            state = np.random.get_state()
+            checkpoint = {"model": model.state_dict(), "model_name": config["model"], "classes": classes,
+                          "optimizer": optimizer.state_dict(), "scheduler": scheduler.state_dict(),
+                          "scaler": scaler.state_dict(), "epoch": epoch, "best_metric": best, "global_step": global_step,
+                          "config": config, "torch_rng": torch.get_rng_state(),
+                          "loader_rng": generator.get_state(), "python_rng": random.getstate(),
+                          "numpy_rng": (state[0], state[1].tolist(), state[2], state[3], state[4]),
+                          "cuda_rng": torch.cuda.get_rng_state_all() if device.type == "cuda" else None}
+            save_checkpoint(run / "last.pt", checkpoint)
+            if improved:
+                save_checkpoint(run / "best.pt", checkpoint)
+            record = {"epoch": epoch+1, "lr": lr, "loss": loss, "validation": metrics,
+                      "partial_smoke_check": bool(args.max_steps)}
+            with (run / "metrics.jsonl").open("a", encoding="utf-8") as stream:
+                import json
+                stream.write(json.dumps(record, ensure_ascii=False) + "\n")
+            reporter.metrics({**{f"train/epoch_{key}": value for key, value in loss.items()},
+                              "val/AP50": metrics['map_50'], "val/AP50_95_simple": score,
+                              "val/best": best, "lr": lr, "epoch": epoch+1}, global_step)
+            reporter.epoch(epoch+1, loss, metrics, lr, best, improved)
+    reporter.log.info("Finished | checkpoints: %s", run)
+    console.print(f"[cyan]TensorBoard:[/] python -m tensorboard.main --logdir \"{run / 'tensorboard'}\"")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        logging.getLogger("runo").warning("Training stopped by user; resume from the last completed epoch with last.pt")
+        raise SystemExit(130)
+    except Exception:
+        logging.getLogger("runo").exception("Training failed")
+        raise SystemExit(1)

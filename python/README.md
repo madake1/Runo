@@ -56,7 +56,7 @@ python -m datasets.plantdoc.prepare
 python train.py --config configs/plantdoc_ssdlite.yaml
 ```
 
-当前检测到该环境为 CPU 版 PyTorch，正式训练可能耗时较长。需要补依赖时才运行 `python -m pip install -r requirements.txt`，torch 与 torchvision 须成对匹配。首次预训练模型会下载权重，缓存到 `runs/_cache/pretrained/`；`data/` 只管理数据集。
+当前本机 Runo 环境已安装 `torch 2.14.0+cu130` 与 `torchvision 0.29.0+cu130`，已验证 RTX 5090 D v2 上的 CUDA 训练。配置 `device: auto` 在 CUDA 可用时选择显卡，否则使用 CPU。该环境通过 `runo_env_priority.pth` 优先加载环境内的包，避免用户共享目录中的 CPU 版覆盖。需要补依赖时才运行 `python -m pip install -r requirements.txt`，torch 与 torchvision 须成对匹配。首次预训练模型会下载权重，缓存到 `runs/_cache/pretrained/`；`data/` 只管理数据集。
 
 先做小规模离线检查（随机初始化，仅验证流程，不代表识别能力）：
 
@@ -73,6 +73,18 @@ python train.py --config configs/plantdoc_ssdlite.yaml --resume "<run>/last.pt" 
 ```
 
 换模型：使用 `configs/plantdoc_fasterrcnn.yaml`。换蜂糖李数据：先按照 `datasets/fengtangli/README.md` 采集标注并提取，再使用 `configs/fengtangli_ssdlite.yaml`。
+
+## 训练日志
+
+运行 `python train.py` 会显示 Rich 彩色进度条，包括训练/验证批次、百分比、耗时、ETA、批次速度、实时与平均 loss、学习率。每轮结束显示验证指标表，最佳模型用绿色提示；警告和错误使用分级彩色日志。终端不支持交互或重定向输出时，Rich 自动降级为静态输出。
+
+每个实验目录保存 `train.log`、原有 `metrics.jsonl`，以及 Lightning Fabric logger 生成的 `csv/version_*/metrics.csv` 和 `tensorboard/` 事件文件。CSV 每次启动创建新版本，续训不覆盖历史记录。TensorBoard 记录分项训练损失、验证 AP、最佳指标和学习率，断点保存 `global_step` 以延续指标步数。查看曲线：
+
+```powershell
+python -m tensorboard.main --logdir runs/plantdoc_ssdlite
+```
+
+打开终端提示的本地地址。训练循环仍由 Runo 手写，实验记录使用 Lightning Fabric 的 logger。
 
 ## 训练设计
 
