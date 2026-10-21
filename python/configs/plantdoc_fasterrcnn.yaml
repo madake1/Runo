@@ -1,5 +1,6 @@
 # 对照模型；不是默认手机部署模型。
 model: fasterrcnn_mobilenet_v3_large_320_fpn
+dataset: plantdoc
 pretrained: true
 image_root: data/plantdoc/raw
 annotation_dir: data/plantdoc/annotations

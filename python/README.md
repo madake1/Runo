@@ -4,7 +4,7 @@
 
 ## 目录职责
 
-- `configs/`：实验配置，例如模型名称、数据路径、学习率和训练轮数。
+- `configs/defaults.py`：集中设置默认模型、数据集、学习率、轮数等参数和可选名称；旧 YAML 仍可使用。
 - `data/`：数据文件，包括原始图片、标注和数据划分。
 - `datasets/`：数据读取、Dataset 和图像增强代码。
 - `models/`：检测模型构建、预训练权重加载和类别预测头适配代码。
@@ -33,11 +33,14 @@ data/
 │   ├── raw/
 │   ├── metadata/
 │   └── annotations/
+├── acfr_plum/         # ACFR 果园李子定位数据（无病害标签）
 └── plantvillage/      # 仅调研信息，无图片
 
 datasets/
 ├── plantdoc/          # 独立下载、提取方案与脚本
 ├── fengtangli/        # 独立 LabelMe 提取方案与脚本
+├── acfr_plum/         # VOC 李子框转 COCO
+├── factory.py         # 按名称选择数据集
 ├── common.py
 └── coco.py            # 框架统一读取 COCO
 ```
@@ -53,7 +56,7 @@ conda activate Runo
 cd python
 python -m datasets.plantdoc.download
 python -m datasets.plantdoc.prepare
-python train.py --config configs/plantdoc_ssdlite.yaml
+python train.py
 ```
 
 当前本机 Runo 环境已安装 `torch 2.14.0+cu130` 与 `torchvision 0.29.0+cu130`，已验证 RTX 5090 D v2 上的 CUDA 训练。配置 `device: auto` 在 CUDA 可用时选择显卡，否则使用 CPU。该环境通过 `runo_env_priority.pth` 优先加载环境内的包，避免用户共享目录中的 CPU 版覆盖。需要补依赖时才运行 `python -m pip install -r requirements.txt`，torch 与 torchvision 须成对匹配。首次预训练模型会下载权重，缓存到 `runs/_cache/pretrained/`；`data/` 只管理数据集。
@@ -72,7 +75,16 @@ python predict.py --checkpoint "<run>/best.pt" --image "你的图片.jpg" --outp
 python train.py --config configs/plantdoc_ssdlite.yaml --resume "<run>/last.pt" --epochs 30
 ```
 
-换模型：使用 `configs/plantdoc_fasterrcnn.yaml`。换蜂糖李数据：先按照 `datasets/fengtangli/README.md` 采集标注并提取，再使用 `configs/fengtangli_ssdlite.yaml`。
+默认模型和数据集在 `configs/defaults.py` 编辑；命令行可临时选择：
+
+```powershell
+python train.py --model fasterrcnn_resnet50_fpn_v2 --dataset plantdoc
+python train.py --model fasterrcnn_resnet50_fpn_v2 --dataset acfr_plum
+```
+
+`--model` choices：`ssdlite320_mobilenet_v3_large`、`fasterrcnn_mobilenet_v3_large_320_fpn`、`fasterrcnn_resnet50_fpn_v2`。`--dataset` choices：`plantdoc`、`fengtangli`、`acfr_plum`。模型由 `models/network.py` 的工厂构建，数据由 `datasets/factory.py` 选择。无参数时使用 `defaults.py`，`--config` 仍可加载旧 YAML，再由显式 `--model` / `--dataset` 覆盖。新组合按数据集和模型自动创建独立的 `runs/` 目录。
+
+ACFR 数据准备见 [ACFR 说明](datasets/acfr_plum/README.md)；蜂糖李自采标注见 [蜂糖李说明](datasets/fengtangli/README.md)。ACFR 只标记果园李子位置，不能提供病害识别能力。ResNet50 FPN V2 需要更多显存和计算，默认 batch size 为 2；新模型的预训练权重首次运行会下载。
 
 ## 训练日志
 
@@ -81,14 +93,14 @@ python train.py --config configs/plantdoc_ssdlite.yaml --resume "<run>/last.pt" 
 每个实验目录保存 `train.log`、原有 `metrics.jsonl`，以及 Lightning Fabric logger 生成的 `csv/version_*/metrics.csv` 和 `tensorboard/` 事件文件。CSV 每次启动创建新版本，续训不覆盖历史记录。TensorBoard 记录分项训练损失、验证 AP、最佳指标和学习率，断点保存 `global_step` 以延续指标步数。查看曲线：
 
 ```powershell
-python -m tensorboard.main --logdir runs/plantdoc_ssdlite
+python -m tensorboard.main --logdir runs
 ```
 
 打开终端提示的本地地址。训练循环仍由 Runo 手写，实验记录使用 Lightning Fabric 的 logger。
 
 ## 训练设计
 
-- 默认 SSDlite320 + MobileNetV3-Large，轻量检测学习基线；Faster R-CNN MobileNetV3 320 FPN 作对照。
+- 默认 SSDlite320 + MobileNetV3-Large，轻量检测学习基线；Faster R-CNN MobileNetV3 320 FPN 和 ResNet50 FPN V2 作对照。
 - 复用 torchvision 网络和检测损失实现；数据加载、优化器、训练/验证循环、日志、断点恢复由 Runo 编写。
 - COCO 前景类别从 1 开始，0 为背景。Dataset 输出 RGB `[0,1]`；模型内部完成缩放和归一化，不要重复归一化。
 - 训练随机水平翻转，同时修改框坐标；验证不随机增强。
@@ -103,6 +115,14 @@ python -m tensorboard.main --logdir runs/plantdoc_ssdlite
 手机部署阶段需验证运行时算子、NMS、坐标和预处理一致性，再测速度与量化后精度。当前不承诺该 PyTorch 教学模型可直接转换到任何手机运行时。
 
 ## 检查
+
+训练后用 `test.py` 检查模型效果，默认评估完整测试集，并保存前 8 张真实标注（绿色）/预测框（红色）的左右对照图：
+
+```powershell
+python test.py --checkpoint "<run>/best.pt"
+```
+
+输出在 `<run>/tests/<时间戳>/`，包含 `report.json`（整体及逐类 AP、样本列表）、`test.log` 和对照图片。`--samples 20` 可增加对照图，`--threshold 0.3` 只改变图上显示的预测框，不影响 AP。训练过程中可用 `--split val` 检查验证集，测试集留给最终评估。快速检查可加 `--max-images 8`，此时报告明确标记为部分评估。并行训练时可指定 `--device cpu` 避免占用训练显存。
 
 ```powershell
 python -m unittest discover -s tests -v

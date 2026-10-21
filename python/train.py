@@ -10,7 +10,10 @@ import torch
 import yaml
 from torch.utils.data import DataLoader
 
-from datasets.coco import DetectionDataset, collate_fn
+from configs.defaults import (DATASET_CHOICES, DATASET_PATHS, DEFAULT_DATASET,
+                              MODEL_BATCH_SIZE, MODEL_CHOICES, default_config)
+from datasets.coco import collate_fn
+from datasets.factory import build_dataset
 from engine import evaluate, train_one_epoch
 from models.network import build_model, freeze_backbone
 from training_log import TrainingLog, setup_logging, console
@@ -19,17 +22,39 @@ from utils import (BASE, choose_device, load_checkpoint, load_config,
 
 
 def main():
-    log = setup_logging()
-    log.info("Loading configuration, datasets and model…")
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", type=Path, default=BASE / "configs/plantdoc_ssdlite.yaml")
+    parser.add_argument("--config", type=Path, help="可选：加载旧实验 YAML，再由命令行覆盖模型或数据集")
+    parser.add_argument("--model", type=str, choices=MODEL_CHOICES,
+                        help="模型名称；默认值在 configs/defaults.py")
+    parser.add_argument("--dataset", type=str, choices=DATASET_CHOICES,
+                        help="数据集名称；默认值在 configs/defaults.py")
     parser.add_argument("--resume", type=Path)
     parser.add_argument("--epochs", type=int, help="覆盖总训练轮数")
+    parser.add_argument("--batch-size", type=int, help="覆盖模型对应的默认 batch size")
     parser.add_argument("--max-steps", type=int, help="每轮训练和验证限制步数，仅用于冒烟检查")
     parser.add_argument("--no-pretrained", action="store_true", help="离线调试；正式训练推荐预训练")
     parser.add_argument("--run-dir", type=Path)
     args = parser.parse_args()
-    config = load_config(args.config)
+    log = setup_logging()
+    log.info("Loading configuration, datasets and model...")
+    checkpoint = load_checkpoint(args.resume) if args.resume else None
+    config = (load_config(args.config) if args.config else
+              dict(checkpoint["config"]) if checkpoint else default_config())
+    if args.dataset:
+        config["dataset"] = args.dataset
+        image_root, annotation_dir = DATASET_PATHS[args.dataset]
+        config["image_root"] = str(BASE / image_root)
+        config["annotation_dir"] = str(BASE / annotation_dir)
+    config.setdefault("dataset", DEFAULT_DATASET)
+    if args.model:
+        config["model"] = args.model
+        config["batch_size"] = MODEL_BATCH_SIZE[args.model]
+    if args.batch_size is not None:
+        config["batch_size"] = args.batch_size
+    if config["model"] not in MODEL_CHOICES or config["dataset"] not in DATASET_CHOICES:
+        parser.error(f"model 和 dataset 必须分别属于 {MODEL_CHOICES}、{DATASET_CHOICES}")
+    if args.model or args.dataset:
+        config["run_dir"] = str(BASE / "runs" / f"{config['dataset']}_{config['model']}")
     if args.epochs is not None:
         config["epochs"] = args.epochs
     if args.no_pretrained:
@@ -47,9 +72,8 @@ def main():
     seed_everything(config["seed"])
     torch.set_num_threads(config.get("cpu_threads", 4))
     device = choose_device(config["device"])
-    annotation_dir = Path(config["annotation_dir"])
-    train_set = DetectionDataset(config["image_root"], annotation_dir / "train.json", augment=True)
-    val_set = DetectionDataset(config["image_root"], annotation_dir / "val.json")
+    train_set = build_dataset(config["dataset"], "train", config, augment=True)
+    val_set = build_dataset(config["dataset"], "val", config)
     if train_set.classes != val_set.classes:
         raise ValueError("训练与验证类别映射不一致")
     classes = train_set.classes
@@ -58,10 +82,11 @@ def main():
                   collate_fn=collate_fn, worker_init_fn=seed_worker, pin_memory=device.type == "cuda")
     train_loader = DataLoader(train_set, shuffle=True, generator=generator, **common)
     val_loader = DataLoader(val_set, shuffle=False, **common)
-    checkpoint = load_checkpoint(args.resume) if args.resume else None
     if checkpoint:
         if checkpoint["classes"] != classes or checkpoint["model_name"] != config["model"]:
             raise ValueError("恢复训练的类别或模型与配置不同")
+        if checkpoint["config"].get("dataset", DEFAULT_DATASET) != config["dataset"]:
+            raise ValueError("恢复训练的数据集与断点不同")
         # 仅允许修改总轮数和设备等运行设置；防止意外换数据/优化策略。
         for key in ["image_root", "annotation_dir", "lr", "weight_decay", "freeze_backbone_epochs", "freeze_bn", "batch_size"]:
             if checkpoint["config"][key] != config[key]:

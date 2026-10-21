@@ -7,6 +7,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from datasets.coco import DetectionDataset, collate_fn
+from datasets.factory import build_dataset
 from engine import evaluate
 from models import build_model
 from utils import choose_device, load_checkpoint, write_json
@@ -24,8 +25,10 @@ def main():
     checkpoint = load_checkpoint(args.checkpoint)
     config = checkpoint["config"]
     torch.set_num_threads(config.get("cpu_threads", 4))
-    data = DetectionDataset(args.image_root or config["image_root"],
-                            args.annotations or Path(config["annotation_dir"]) / f"{args.split}.json")
+    data = (DetectionDataset(args.image_root or config["image_root"],
+                             args.annotations or Path(config["annotation_dir"]) / f"{args.split}.json")
+            if args.image_root or args.annotations else
+            build_dataset(config.get("dataset", "plantdoc"), args.split, config))
     if data.classes != checkpoint["classes"]:
         raise ValueError("评估数据与模型类别映射不同")
     device = choose_device(args.device)

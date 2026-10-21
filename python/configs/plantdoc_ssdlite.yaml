@@ -1,5 +1,6 @@
 # 练习用 PlantDoc，不能当作蜂糖李识别模型。
 model: ssdlite320_mobilenet_v3_large
+dataset: plantdoc
 pretrained: true
 image_root: data/plantdoc/raw
 annotation_dir: data/plantdoc/annotations

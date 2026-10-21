@@ -1,0 +1,19 @@
+# ACFR 日间李子定位实验。只有 plum 一类；不含病害标签。
+model: fasterrcnn_resnet50_fpn_v2
+dataset: acfr_plum
+pretrained: true
+image_root: data/acfr_plum/raw
+annotation_dir: data/acfr_plum/annotations
+run_dir: runs/acfr_plum_resnet50_fpn_v2
+device: auto
+cpu_threads: 4
+seed: 42
+epochs: 12
+batch_size: 2
+num_workers: 0
+lr: 0.005
+weight_decay: 0.0005
+lr_step: 8
+freeze_backbone_epochs: 2
+freeze_bn: true
+amp: true

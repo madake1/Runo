@@ -41,10 +41,10 @@ class TrainingLog:
             gpu += " | " + torch.cuda.get_device_name(device)
         for label, value in [("Model", config["model"]), ("Device", gpu),
                              ("Data", f"train {train_size:,} | val {val_size:,} | classes {classes}"),
-                             ("Training", f"epochs {start+1}–{config['epochs']} | batch {config['batch_size']} | lr {config['lr']}"),
+                             ("Training", f"epochs {start+1}-{config['epochs']} | batch {config['batch_size']} | lr {config['lr']}"),
                              ("Run", str(run))]:
             table.add_row(f"[bold cyan]{label}[/]", str(value))
-        console.print(Panel(table, title="[bold cyan]Runo · Detection Training[/]", border_style="cyan"))
+        console.print(Panel(table, title="[bold cyan]Runo | Detection Training[/]", border_style="cyan"))
         self.progress = Progress(
             TextColumn("{task.description}"), BarColumn(complete_style="cyan", finished_style="green"),
             MofNCompleteColumn(), TextColumn("{task.percentage:>5.1f}%"),
@@ -88,7 +88,7 @@ class TrainingLog:
             writer.save()
         if self.epoch_task is not None:
             self.progress.update(self.epoch_task, metrics=f"AP50={metrics['map_50']:.4f} AP50:95={metrics['map_50_95_simple']:.4f}")
-        table = Table(title=f"Epoch {epoch} · Validation", border_style="dim")
+        table = Table(title=f"Epoch {epoch} | Validation", border_style="dim")
         for name in ["Loss", "AP50", "AP50:95 (simple)", "Best", "LR"]:
             table.add_column(name, justify="right")
         table.add_row(f"{loss['total']:.4f}", f"{metrics['map_50']:.4f}",
@@ -97,5 +97,5 @@ class TrainingLog:
         self.log.info("Epoch %d | loss %.4f | AP50 %.4f | AP50:95 %.4f | lr %.3g",
                       epoch, loss['total'], metrics['map_50'], metrics['map_50_95_simple'], lr)
         if improved:
-            console.print("[bold green]✓ New best checkpoint saved[/]")
+            console.print("[bold green]New best checkpoint saved[/]")
             self.log.info("Saved best.pt | score %.4f", best)

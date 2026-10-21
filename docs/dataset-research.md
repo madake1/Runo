@@ -1,4 +1,4 @@
-# 蜂糖李数据调研（2026-10-12）
+# 蜂糖李数据调研（更新于 2026-10-17）
 
 目标：贵州蜂糖李果实与叶片病害定位，支持近照和复杂背景，未来扩展视频。
 
@@ -12,6 +12,9 @@
 | Java Plum / Hog Plum | 其他植物；Hog Plum 文献明确 Spondias mombin | 排除 |
 | PlantSeg | 病斑分割，论文表中 plum bacterial spot 仅 10 张 | 可后续核验物种，覆盖不足，不下载约 3GB 全量 |
 | 李子红点病两阶段论文 | 研究李子病害，本次未找到已验证的公开原始下载入口 | 可联系作者，不声称已取得数据 |
+| ACFR Plum Harvesting Detection | 果园日/夜各 350 张，VOC 红李果实框；无病害标签。已下载日间包并转换为 COCO | 接入 `acfr_plum`，用于果实定位，不作为蜂糖李病害结果 |
+| ApplePlumBD | 623 原图，生长阶段检测；页面未给出清晰学名，采集于孟加拉 | 暂不接入，先核实物种及标注内容 |
+| 四川古蔺李子果园数据（YOLOv7-Plum） | 论文有 1,220 张自然果园图、8,745 个果实框，地理与场景更接近贵州；论文说明数据须向通讯作者申请 | 优先考虑申请，当前没有可直接下载的公开包，也没有病害标注 |
 
 ## 原始来源
 
@@ -24,6 +27,9 @@
 - PlantSeg：https://github.com/tqwei05/PlantSeg
 - PlantSeg 论文：https://www.nature.com/articles/s41597-025-06513-4
 - 李子红点病论文：https://www.mdpi.com/2073-4395/14/7/1589
+- ACFR 李子检测：https://data.acfr.usyd.edu.au/Agriculture/PlumDetection/
+- ApplePlumBD：https://data.mendeley.com/datasets/n6x3mbnvdh/2
+- YOLOv7-Plum（古蔺，数据需申请）：https://pmc.ncbi.nlm.nih.gov/articles/PMC10420999/
 
 蜂糖李需要自采或向机构获取对应数据。先统一框病叶/病果或框病斑，覆盖不同树、日期、距离、健康背景和遮挡，保留来源组并请专家确认类别。
 

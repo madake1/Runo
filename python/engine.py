@@ -16,7 +16,7 @@ def train_one_epoch(model, loader, optimizer, device, scaler, amp=False, freeze_
                 module.eval()
     totals, steps = {}, 0
     total = min(len(loader), max_steps) if max_steps else len(loader)
-    phase = reporter.phase(f"[cyan]Train · Epoch {epoch}[/]", total) if reporter else nullcontext(None)
+    phase = reporter.phase(f"[cyan]Train | Epoch {epoch}[/]", total) if reporter else nullcontext(None)
     with phase as task:
         for images, targets in loader:
             images = [image.to(device) for image in images]
@@ -51,7 +51,7 @@ def evaluate(model, loader, device, classes, max_steps=None, reporter=None, epoc
     model.eval()
     predictions, targets = [], []
     total = min(len(loader), max_steps) if max_steps else len(loader)
-    phase = reporter.phase(f"[magenta]Validate · Epoch {epoch}[/]", total) if reporter else nullcontext(None)
+    phase = reporter.phase(f"[magenta]Validate | Epoch {epoch}[/]", total) if reporter else nullcontext(None)
     with phase as task:
         for step, (images, batch_targets) in enumerate(loader, 1):
             outputs = model([image.to(device) for image in images])
@@ -62,5 +62,5 @@ def evaluate(model, loader, device, classes, max_steps=None, reporter=None, epoc
             if max_steps and step >= max_steps:
                 break
         if reporter:
-            reporter.progress.update(task, metrics="Computing AP…", refresh=True)
+            reporter.progress.update(task, metrics="Computing AP...", refresh=True)
         return detection_metrics(predictions, targets, classes)
