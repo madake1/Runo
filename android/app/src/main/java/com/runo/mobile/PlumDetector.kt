@@ -1,3 +1,4 @@
+// Local YOLO/ONNX inference: prepare pixels, decode detections, and apply NMS.
 package com.runo.mobile
 
 import android.content.Context
@@ -13,9 +14,11 @@ import java.nio.FloatBuffer
 import kotlin.math.max
 import kotlin.math.min
 
+/** One predicted box in upright camera-image coordinates. */
 data class Detection(val left: Float, val top: Float, val right: Float,
                      val bottom: Float, val score: Float, val label: String)
 
+/** Loads the bundled model and turns a bitmap into filtered fruit detections. */
 class PlumDetector(context: Context) : AutoCloseable {
     private val env = OrtEnvironment.getEnvironment()
     private val session: OrtSession
@@ -39,6 +42,7 @@ class PlumDetector(context: Context) : AutoCloseable {
         options.close()
     }
 
+    /** Letterboxes a frame, runs ONNX inference, and returns NMS-filtered boxes. */
     fun detect(bitmap: Bitmap): List<Detection> {
         val scale = min(size.toFloat() / bitmap.width, size.toFloat() / bitmap.height)
         val width = (bitmap.width * scale).toInt()
@@ -99,6 +103,7 @@ class PlumDetector(context: Context) : AutoCloseable {
         return kept
     }
 
+    /** Computes overlap for two boxes during nonmaximum suppression. */
     private fun iou(a: Detection, b: Detection): Float {
         val w = max(0f, min(a.right, b.right) - max(a.left, b.left))
         val h = max(0f, min(a.bottom, b.bottom) - max(a.top, b.top))
@@ -108,5 +113,6 @@ class PlumDetector(context: Context) : AutoCloseable {
         return intersection / max(1e-6f, areaA + areaB - intersection)
     }
 
+    /** Frees the native ONNX Runtime session when the screen closes. */
     override fun close() { session.close() }
 }

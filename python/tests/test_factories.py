@@ -12,7 +12,9 @@ from datasets.factory import build_dataset
 
 
 class FactoryTests(unittest.TestCase):
+    """验证数据集及默认配置工厂。"""
     def test_acfr_source_frames_do_not_touch_split_boundaries(self):
+        """验证 ACFR 连续帧划分边界隔离。"""
         splits, gap = split_ids([f"{index:04d}" for index in range(1, 351)])
         self.assertEqual(gap, 5)
         self.assertEqual([len(splits[key]) for key in ("train", "val", "test")], [245, 48, 47])
@@ -20,6 +22,7 @@ class FactoryTests(unittest.TestCase):
         self.assertGreater(int(splits["test"][0]) - int(splits["val"][-1]), gap)
 
     def test_named_dataset_uses_its_coco_annotations(self):
+        """验证工厂按名称加载对应 COCO 标注。"""
         with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1] / "runs") as folder:
             root = Path(folder)
             Image.new("RGB", (8, 8)).save(root / "sample.jpg")
@@ -37,6 +40,7 @@ class FactoryTests(unittest.TestCase):
                 build_dataset("acfr_plum", "test", config)
 
     def test_default_choices_are_registered(self):
+        """验证默认模型和数据集名称已注册。"""
         self.assertIn(default_config()["model"], MODEL_CHOICES)
         self.assertIn(default_config()["dataset"], DATASET_CHOICES)
 

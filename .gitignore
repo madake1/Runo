@@ -40,11 +40,8 @@ __pycache__/
 *.py[cod]
 .venv/
 python/runs/*
-!python/runs/README.md
 python/yolo11n.pt
 android/app/src/main/assets/*.onnx
 android/app/src/main/assets/best.json
-# 数据按数据集分目录，跟踪各目录说明，忽略图片与生成标注。
+# 数据按数据集分目录，忽略图片与生成标注。
 python/data/**
-!python/data/**/
-!python/data/**/README.md

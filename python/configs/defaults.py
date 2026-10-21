@@ -46,6 +46,7 @@ DATASET_PATHS = {
 
 
 def default_config(model: str = DEFAULT_MODEL, dataset: str = DEFAULT_DATASET) -> dict:
+    """按模型和数据集名称生成完整默认训练配置。"""
     if model not in MODEL_CHOICES or dataset not in DATASET_CHOICES:
         raise ValueError(f"Unsupported model/dataset: {model}/{dataset}")
     root = Path(__file__).resolve().parents[1]

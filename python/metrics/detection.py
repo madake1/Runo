@@ -7,6 +7,7 @@ import numpy as np
 
 
 def iou(box, boxes):
+    """计算一个框与多个框的交并比。"""
     boxes = np.asarray(boxes, dtype=float).reshape(-1, 4)
     if not len(boxes):
         return np.empty(0)
@@ -19,6 +20,7 @@ def iou(box, boxes):
 
 
 def class_ap(predictions, targets, category, threshold):
+    """计算指定类别及 IoU 阈值下的平均精度。"""
     truth, detections = {}, []
     for image_id, (prediction, target) in enumerate(zip(predictions, targets)):
         truth[image_id] = target["boxes"][target["labels"] == category].numpy()
@@ -50,6 +52,7 @@ def class_ap(predictions, targets, category, threshold):
 
 
 def detection_metrics(predictions, targets, classes):
+    """汇总所有类别的 AP50 与简化 AP50:95。"""
     results = {name: [] for name in classes}
     for threshold in np.linspace(0.5, 0.95, 10):
         for category, name in enumerate(classes, 1):

@@ -11,7 +11,9 @@ from torchvision.transforms import functional as F
 
 
 class DetectionDataset(Dataset):
+    """把 COCO 图片和标注转换为 torchvision 检测样本。"""
     def __init__(self, image_root, annotation_path, augment=False):
+        """读取 COCO 标注并建立图片与目标索引。"""
         self.root = Path(image_root).resolve()
         data = json.loads(Path(annotation_path).read_text(encoding="utf-8"))
         categories = sorted(data["categories"], key=lambda item: item["id"])
@@ -31,9 +33,11 @@ class DetectionDataset(Dataset):
             raise ValueError("数据集为空")
 
     def __len__(self):
+        """返回数据集中的图片数量。"""
         return len(self.images)
 
     def __getitem__(self, index):
+        """读取一张图片及检测框，并执行训练增强。"""
         info = self.images[index]
         path = (self.root / info["file_name"]).resolve()
         if not path.is_relative_to(self.root):
@@ -62,5 +66,6 @@ class DetectionDataset(Dataset):
 
 def collate_fn(batch):
     # 检测图片尺寸和框数不相同，不能直接 stack。
+    """把不同框数的样本组合成检测模型批次。"""
     images, targets = zip(*batch)
     return list(images), list(targets)

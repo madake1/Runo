@@ -12,6 +12,7 @@ from datasets.common import clipped_box, inspect_image, save_coco, write_json
 
 
 def split_ids(ids):
+    """按连续帧分段并丢弃划分边界附近帧。"""
     ids = sorted(ids)
     if len(ids) < 20:
         raise ValueError("至少需要 20 帧才能划分训练、验证和测试")
@@ -23,6 +24,7 @@ def split_ids(ids):
 
 
 def parse_image(folder, image_id):
+    """读取一张 ACFR 图片及其 VOC 检测框。"""
     xml = folder / "Annotations" / f"{image_id}.xml"
     tree = ET.parse(xml).getroot()
     image_path = folder / "JPEGImages" / f"{image_id}.jpg"
@@ -42,6 +44,7 @@ def parse_image(folder, image_id):
 
 
 def main():
+    """转换 ACFR 标注为带来源隔离的 COCO 划分。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--raw", type=Path, default=Path("data/acfr_plum/raw"))
     parser.add_argument("--output", type=Path, default=Path("data/acfr_plum/annotations"))

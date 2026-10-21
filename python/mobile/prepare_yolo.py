@@ -7,6 +7,7 @@ import yaml
 
 
 def prepare(annotation_dir: Path, image_root: Path, output: Path) -> Path:
+    """把 ACFR COCO 标注转换为 YOLO 图片列表和标签。"""
     output.mkdir(parents=True, exist_ok=True)
     names = None
     for split in ("train", "val", "test"):

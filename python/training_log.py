@@ -14,6 +14,7 @@ console = Console()
 
 
 def setup_logging(path=None):
+    """配置终端与文件日志输出。"""
     logger = logging.getLogger("runo")
     logger.setLevel(logging.INFO)
     for handler in logger.handlers[:]:
@@ -29,7 +30,9 @@ def setup_logging(path=None):
 
 
 class TrainingLog:
+    """统一训练进度条、终端日志和指标输出。"""
     def __init__(self, run, config, device, train_size, val_size, classes, start):
+        """初始化训练进度显示和指标记录器。"""
         self.log = setup_logging(run / "train.log")
         self.writers = [TensorBoardLogger(str(run), name="tensorboard", version=""),
                         CSVLogger(str(run), name="csv", flush_logs_every_n_steps=50)]
@@ -55,10 +58,12 @@ class TrainingLog:
         self.epoch_task = None
 
     def __enter__(self):
+        """启动进度界面并返回日志对象。"""
         self.progress.start()
         return self
 
     def __exit__(self, exc_type, exc, tb):
+        """结束进度界面并释放日志资源。"""
         self.progress.stop()
         status = "success" if exc_type is None else "failed"
         for writer in self.writers:
@@ -68,6 +73,7 @@ class TrainingLog:
 
     @contextmanager
     def phase(self, name, total):
+        """创建一个训练或验证阶段的进度任务。"""
         if self.epoch_task is not None:
             self.progress.remove_task(self.epoch_task)
         task = self.progress.add_task(name, total=total, speed="", metrics="")
@@ -75,15 +81,18 @@ class TrainingLog:
         yield task
 
     def advance(self, task, metrics=""):
+        """推进批次进度并更新当前指标文本。"""
         self.progress.update(task, advance=1, metrics=metrics)
         speed = self.progress.tasks[0].speed
         self.progress.update(task, speed=f"{speed:.2f} batch/s" if speed else "")
 
     def metrics(self, values, step):
+        """把当前指标写入 CSV 和 TensorBoard。"""
         for writer in self.writers:
             writer.log_metrics(values, step=step)
 
     def epoch(self, epoch, loss, metrics, lr, best, improved):
+        """汇总一轮训练结果并记录最佳指标状态。"""
         for writer in self.writers:
             writer.save()
         if self.epoch_task is not None:

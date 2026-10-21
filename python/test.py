@@ -44,6 +44,7 @@ def comparison(image, target, prediction, classes, threshold):
 
 @torch.inference_mode()
 def main():
+    """在数据集上评估检查点并保存真实框与预测框对照。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--split", choices=["test", "val"], default="test")

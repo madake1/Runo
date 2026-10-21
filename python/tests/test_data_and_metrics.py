@@ -14,7 +14,9 @@ from metrics.detection import detection_metrics
 
 
 class DetectionTests(unittest.TestCase):
+    """验证数据处理与指标的关键边界情况。"""
     def test_duplicate_sources_are_bound(self):
+        """验证重复图片不会被分配到不同划分。"""
         records = [{"group": "tree_a", "digest": "same"},
                    {"group": "tree_b", "digest": "same"},
                    {"group": "tree_b", "digest": "other"},
@@ -24,10 +26,12 @@ class DetectionTests(unittest.TestCase):
         self.assertFalse({r['digest'] for r in train} & {r['digest'] for r in val})
 
     def test_windows_filename_mapping(self):
+        """验证非法 Windows 文件名可稳定映射。"""
         self.assertNotIn("?", local_filename("image.jpg?size=100.jpg"))
         self.assertEqual(local_filename("image.jpg"), "image.jpg")
 
     def test_dataset_and_negative_sample(self):
+        """验证 COCO 读取和无目标健康样本。"""
         with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1] / "runs") as directory:
             root = Path(directory)
             Image.new("RGB", (20, 10), "green").save(root / "a.jpg")
@@ -46,6 +50,7 @@ class DetectionTests(unittest.TestCase):
                 self.assertEqual(dataset[0][1]["boxes"].tolist(), [[12, 2, 19, 9]])
 
     def test_fengtangli_labelme_conversion(self):
+        """验证蜂糖李 LabelMe 框转换。"""
         from datasets.fengtangli.prepare import main
         with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1] / "runs") as directory:
             root = Path(directory)
@@ -74,6 +79,7 @@ class DetectionTests(unittest.TestCase):
             self.assertFalse(subsets[0] & subsets[1] or subsets[0] & subsets[2] or subsets[1] & subsets[2])
 
     def test_ap_perfect_and_duplicate_false_positive(self):
+        """验证完美预测与重复误检对 AP 的影响。"""
         truth = [{"boxes": torch.tensor([[0., 0., 10., 10.]]), "labels": torch.tensor([1])},
                  {"boxes": torch.tensor([[0., 0., 10., 10.]]), "labels": torch.tensor([1])}]
         perfect = [{**t, "scores": torch.tensor([0.9])} for t in truth]

@@ -8,6 +8,7 @@ from datasets.common import clipped_box, group_split, inspect_image, local_filen
 
 
 def read_split(root, folder, csv_name, issues):
+    """读取官方 CSV 并聚合同一图片的检测框。"""
     by_file = defaultdict(list)
     with (root / csv_name).open(encoding="utf-8-sig") as stream:
         for row in csv.DictReader(stream):
@@ -38,6 +39,7 @@ def read_split(root, folder, csv_name, issues):
 
 
 def main():
+    """清洗 PlantDoc 图片与标签并生成 COCO 划分。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--raw", type=Path, default=Path("data/plantdoc/raw"))
     parser.add_argument("--output", type=Path, default=Path("data/plantdoc/annotations"))

@@ -14,6 +14,7 @@ from utils import choose_device, load_checkpoint, write_json
 
 
 def main():
+    """解析评估参数，加载检查点并输出指定划分的指标。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--split", choices=["val", "test"], default="test")

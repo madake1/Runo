@@ -8,6 +8,7 @@ from ultralytics import YOLO
 
 
 def main():
+    """核对 ONNX 张量协议和 PyTorch/ONNX 单图预测。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--weights", type=Path, default=Path("runs/mobile_plum/train/weights/best.pt"))
     parser.add_argument("--onnx", type=Path, default=Path("runs/mobile_plum/train/weights/best.onnx"))

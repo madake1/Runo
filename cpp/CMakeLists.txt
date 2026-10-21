@@ -1,3 +1,4 @@
+# Build the standalone desktop OpenCV camera program.
 cmake_minimum_required(VERSION 3.20)
 project(RunoCpp LANGUAGES CXX)
 

@@ -56,5 +56,6 @@ def build_model(name, num_classes, pretrained=True):
 
 
 def freeze_backbone(model, frozen):
+    """按训练阶段冻结或解冻模型主干参数。"""
     for parameter in model.backbone.parameters():
         parameter.requires_grad_(not frozen)

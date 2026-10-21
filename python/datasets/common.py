@@ -16,12 +16,14 @@ def local_filename(name):
 
 
 def write_json(path, value):
+    """将数据集报告写为 UTF-8 JSON。"""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def inspect_image(path):
+    """读取图片尺寸并确认文件可解码。"""
     with Image.open(path) as image:
         image.load()
         width, height = image.size
@@ -37,6 +39,7 @@ def group_split(records, val_ratio=0.2, seed=42):
     parent = {}
 
     def root(x):
+        """查找并压缩来源组的连通集合。"""
         parent.setdefault(x, x)
         if parent[x] != x:
             parent[x] = root(parent[x])
@@ -77,6 +80,7 @@ def save_coco(records, classes, output):
 
 
 def clipped_box(box, width, height):
+    """把检测框裁剪到图像范围内。"""
     x1, y1, x2, y2 = map(float, box)
     x1, x2 = max(0, min(width, x1)), max(0, min(width, x2))
     y1, y2 = max(0, min(height, y1)), max(0, min(height, y2))

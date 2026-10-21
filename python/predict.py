@@ -10,6 +10,7 @@ from utils import write_json
 
 
 def main():
+    """读取图片与检查点，保存检测框图片和结构化结果。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--image", type=Path, required=True)

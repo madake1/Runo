@@ -7,6 +7,7 @@ from ultralytics import YOLO
 
 
 def main():
+    """训练轻量 YOLO 并导出 ONNX 模型及元数据。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", type=Path, default=Path("runs/mobile_plum_dataset/data.yaml"))
     parser.add_argument("--model", default="yolo11n.pt")

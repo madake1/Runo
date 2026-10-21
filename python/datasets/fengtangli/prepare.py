@@ -7,6 +7,7 @@ from datasets.common import clipped_box, group_split, inspect_image, save_coco, 
 
 
 def main():
+    """读取自采 LabelMe 标注和来源组并生成 COCO 划分。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--raw", type=Path, default=Path("data/fengtangli/raw"))
     parser.add_argument("--groups", type=Path, required=True,

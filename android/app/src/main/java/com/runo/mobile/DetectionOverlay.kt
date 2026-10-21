@@ -1,3 +1,4 @@
+// Draws model detections over CameraX preview in matching screen coordinates.
 package com.runo.mobile
 
 import android.content.Context
@@ -7,6 +8,7 @@ import android.graphics.Paint
 import android.view.View
 import kotlin.math.max
 
+/** Displays detection rectangles and labels above the camera preview. */
 class DetectionOverlay(context: Context) : View(context) {
     private val boxPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.RED; style = Paint.Style.STROKE; strokeWidth = 4f
@@ -18,6 +20,7 @@ class DetectionOverlay(context: Context) : View(context) {
     private var sourceWidth = 1
     private var sourceHeight = 1
 
+    /** Stores results and source size, then requests a redraw. */
     fun update(detections: List<Detection>, imageWidth: Int, imageHeight: Int) {
         results = detections
         sourceWidth = imageWidth
@@ -25,6 +28,7 @@ class DetectionOverlay(context: Context) : View(context) {
         invalidate()
     }
 
+    /** Maps image boxes through the preview crop and paints them on screen. */
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         // PreviewView uses FILL_CENTER; map the upright analysis frame likewise.

@@ -1,3 +1,4 @@
+// Archived OpenCV version-printing example; excluded from the default target.
 #include <iostream>
 #include <opencv2/opencv.hpp>
 

@@ -1,3 +1,4 @@
+// Camera screen: permission, preview, frame analysis, detection overlay, and freeze control.
 package com.runo.mobile
 
 import android.Manifest
@@ -23,6 +24,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import java.util.concurrent.Executors
 
+/** Owns CameraX and coordinates live detection with the screen controls. */
 class MainActivity : ComponentActivity() {
     private lateinit var preview: PreviewView
     private lateinit var frozenImage: ImageView
@@ -38,6 +40,7 @@ class MainActivity : ComponentActivity() {
         if (granted) preview.post { startCamera() } else status.text = "需要相机权限"
     }
 
+    /** Builds the preview UI, loads the detector, and requests camera access. */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         preview = PreviewView(this).apply { scaleType = PreviewView.ScaleType.FILL_CENTER }
@@ -94,6 +97,7 @@ class MainActivity : ComponentActivity() {
         else permission.launch(Manifest.permission.CAMERA)
     }
 
+    /** Binds preview and analysis streams and sends upright frames to the detector. */
     private fun startCamera() {
         val future = ProcessCameraProvider.getInstance(this)
         future.addListener({
@@ -137,6 +141,7 @@ class MainActivity : ComponentActivity() {
         }, ContextCompat.getMainExecutor(this))
     }
 
+    /** Releases the analysis worker, model session, and cached camera frame. */
     override fun onDestroy() {
         super.onDestroy()
         executor.shutdown()

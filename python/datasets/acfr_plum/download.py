@@ -9,6 +9,7 @@ BASE_URL = "https://data.acfr.usyd.edu.au/Agriculture/PlumDetection/dataset"
 
 
 def extract_archive(archive: Path, target: Path):
+    """从官方压缩包提取 RGB 图像、VOC 标注和划分清单。"""
     target.mkdir(parents=True, exist_ok=True)
     root = target.resolve()
     with ZipFile(archive) as zf:
@@ -23,6 +24,7 @@ def extract_archive(archive: Path, target: Path):
 
 
 def main():
+    """下载并整理 ACFR 日间或夜间原始数据。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sets", nargs="+", choices=("Day", "Night"), default=["Day"],
                         help="默认只下载日间 78 MB；可选 Day Night")

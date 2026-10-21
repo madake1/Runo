@@ -22,6 +22,7 @@ from utils import (BASE, choose_device, load_checkpoint, load_config,
 
 
 def main():
+    """解析训练配置并组织数据、模型、训练循环与断点。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, help="可选：加载旧实验 YAML，再由命令行覆盖模型或数据集")
     parser.add_argument("--model", type=str, choices=MODEL_CHOICES,

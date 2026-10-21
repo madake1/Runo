@@ -9,6 +9,7 @@ from metrics import detection_metrics
 
 def train_one_epoch(model, loader, optimizer, device, scaler, amp=False, freeze_bn=False,
                     max_steps=None, reporter=None, epoch=1, global_step=0):
+    """训练一个 epoch，记录每批损失并按配置更新模型。"""
     model.train()
     if freeze_bn:
         for module in model.modules():
@@ -48,6 +49,7 @@ def train_one_epoch(model, loader, optimizer, device, scaler, amp=False, freeze_
 
 @torch.inference_mode()
 def evaluate(model, loader, device, classes, max_steps=None, reporter=None, epoch=1):
+    """在验证数据上运行模型并汇总检测指标。"""
     model.eval()
     predictions, targets = [], []
     total = min(len(loader), max_steps) if max_steps else len(loader)

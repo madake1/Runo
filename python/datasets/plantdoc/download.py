@@ -18,6 +18,7 @@ BASE = f"https://raw.githubusercontent.com/{REPO}/{REVISION}/"
 
 
 def fetch(remote, target):
+    """按固定上游版本下载文件并在失败时重试。"""
     target = Path(target)
     if target.exists() and target.stat().st_size:
         return
@@ -43,6 +44,7 @@ def fetch(remote, target):
 
 
 def main():
+    """下载 PlantDoc 标注和图片并记录校验信息。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path("data/plantdoc/raw"))
     parser.add_argument("--max-images", type=int, default=0, help="每个官方划分上限；0 下载全量")
@@ -51,7 +53,7 @@ def main():
     if args.max_images < 0 or args.workers < 1:
         parser.error("max-images >= 0 且 workers >= 1")
     root = args.output
-    for name in ["train_labels.csv", "test_labels.csv", "README.md", "LICENSE.txt"]:
+    for name in ["train_labels.csv", "test_labels.csv", "LICENSE.txt"]:
         fetch(name, root / name)
     files = []
     for split, csv_name in [("TRAIN", "train_labels.csv"), ("TEST", "test_labels.csv")]:
@@ -63,6 +65,7 @@ def main():
         files.extend((f"{split}/{name}", root / split / local_filename(name)) for name in names)
     errors, unavailable = [], []
     def job(item):
+        """下载一张图片并返回校验值或错误。"""
         remote, target = item
         try:
             fetch(remote, target)

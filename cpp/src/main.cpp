@@ -1,6 +1,8 @@
+// Desktop OpenCV camera preview entry point for the standalone C++ project.
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
+// Open the default camera, show frames until Esc, and report camera failures.
 int main()
 {
     cv::VideoCapture camera(0);

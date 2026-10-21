@@ -16,6 +16,7 @@ from utils import choose_device, load_checkpoint
 
 @dataclass
 class Detection:
+    """保存单个预测框、类别和分数。"""
     box_xyxy: list[float]
     category_id: int
     category_name: str
@@ -23,7 +24,9 @@ class Detection:
 
 
 class Detector:
+    """封装检查点加载和图片/逐帧推理。"""
     def __init__(self, checkpoint_path, device="auto", score_threshold=0.4):
+        """加载检查点、类别和设备，准备单图预测。"""
         if not 0 <= score_threshold <= 1:
             raise ValueError("阈值必须在 0 和 1 之间")
         checkpoint = load_checkpoint(checkpoint_path)
