@@ -1,0 +1,4 @@
+# Install alongside the existing python/requirements.txt in the Runo environment.
+ultralytics>=8.3,<9
+onnx>=1.12,<2
+onnxruntime>=1.20,<2

@@ -1,6 +1,8 @@
-# Python 病害检测训练框架
+# Python 检测训练与移动端导出
 
 用于学习手写 PyTorch 检测训练流程。最终任务是贵州蜂糖李果实与叶片病害定位，支持用户随手拍照片，预留视频逐帧接口。当前公开数据只用于学习流程，尚无真实蜂糖李训练数据。
+
+当前移动端首个任务使用 ACFR 李子果实框，见 [Android 部署说明](../android/README.md)。`mobile/prepare_yolo.py` 把 ACFR 的 COCO 标注转为 YOLO 数据，`mobile/train_export.py` 训练轻量 YOLO11n 并导出 ONNX 和 JSON 元数据。原有手写 PyTorch 训练体系不受影响；两条训练路径共用 ACFR 原始数据和划分。
 
 ## 目录职责
 
@@ -110,7 +112,7 @@ python -m tensorboard.main --logdir runs
 
 ## 当前边界
 
-尚未实现病斑分割、视频解码与追踪、ONNX 导出、量化和 Android 部署。预留逐帧协议不是已经实现视频模式。SSDLite 的 320 输入可能漏掉远景小病斑，后续需要在蜂糖李真实数据上验证分辨率与模型选择。
+原有手写 PyTorch 检测器尚未实现病斑分割、视频解码与追踪、ONNX 导出和量化；移动端导出由独立的 `mobile/` YOLO 流程承担。Android 原型尚未经过真机构建与运行验证。SSDLite 的 320 输入可能漏掉远景小病斑，后续需要在蜂糖李真实数据上验证分辨率与模型选择。
 
 手机部署阶段需验证运行时算子、NMS、坐标和预处理一致性，再测速度与量化后精度。当前不承诺该 PyTorch 教学模型可直接转换到任何手机运行时。
 

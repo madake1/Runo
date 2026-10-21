@@ -2,9 +2,11 @@
 
 > **Let me run!**
 
-## 当前更新：蜂糖李病害检测框架
+## 当前里程碑：李子实时检测的移动端链路
 
-Python 已转向手写 PyTorch 检测训练流程，目标是贵州蜂糖李果实/叶片病害定位，预留视频逐帧接口。支持 SSDlite320 MobileNetV3 与 Faster R-CNN MobileNetV3，对应训练、验证、断点恢复、独立评估和单图预测入口。
+已用公开 ACFR 李子果实检测数据训练轻量模型、导出 ONNX，并在 Android 真机摄像头预览中离线画框和拍照定格。这一步验证了模型到手机的工程链路；果实框不代表病害识别。真机初测运行流畅，但出现大量非李子物体也被标为 `plum` 的误检，识别质量尚未通过验收。流程与本次记录见 [Android 说明](android/README.md)。
+
+原有手写 PyTorch 检测训练流程保留。病害定位是后续任务，需要真实病害位置标注。
 
 公开 PlantDoc 检测数据仅用于学习工程流程，不包含蜂糖李，也不是精细病斑标注。真实蜂糖李数据需要采集并确认类别。使用现有 `conda activate Runo` 环境；运行说明见 [Python 框架](python/README.md)，数据调研见 [调研记录](docs/dataset-research.md)。下方早期路线图中的 Python 摄像头/YOLO 状态为历史记录，当前 Python 实现以该说明为准。
 
@@ -46,12 +48,12 @@ Runo/
 ├── python/                    # Python 模型实验，使用独立环境
 │   ├── train.py               # 手写检测训练入口
 │   ├── evaluate.py            # 独立评估
-│   ├── predict.py             # 单图病害目标检测
+│   ├── predict.py             # 原有 PyTorch 检测器的单图推理
 │   ├── datasets/              # 每个数据集独立适配器
 │   ├── data/                  # 每个数据集独立数据目录
 │   ├── requirements.txt
 │   └── models/                # 检测模型构建代码，权重保存在 runs/
-├── android/                   # 最终 App 的预留位置，目前仅有说明
+├── android/                   # CameraX + ONNX Runtime Android 工程
 ├── docs/                      # 学习资料和历史提示
 ├── CMakeLists.txt             # VS 桌面构建入口，委托 cpp/
 ├── CMakePresets.json          # Windows 桌面配置
@@ -80,11 +82,11 @@ CMake 配置成功不代表已生成可执行文件；构建后程序位于 `out
 
 使用 `conda activate Runo`。数据准备、检测训练、评估和图片推理命令见 [Python 说明](python/README.md)。当前使用 PlantDoc 学习检测流程，尚无真实蜂糖李数据；此前的 Python YOLO 摄像头入口已移除。
 
-### 最终 Android App
+### Android App
 
-[Android 目录](android/README.md) 当前只是规划占位，没有 Gradle 工程或 APK。后续以 Kotlin 实现界面和摄像头输入，通过 JNI 调用 C++ 推理库。桌面窗口与摄像头代码留在桌面端，模型实验通过导出模型与运行时对接。
+[Android 目录](android/README.md) 已有 Kotlin/Gradle 工程，使用 CameraX 和 ONNX Runtime 完成第一版离线推理。JNI/C++ 是后续可选的优化路径；先验证标准运行时与模型导出协议。
 
-下面路线图包含早期计划和历史记录。当前 Python 已包含检测训练与评估；尚未实现 ONNX 导出、C++ 模型推理、量化或移动端代码。
+下面路线图包含早期计划和历史记录。当前已增加 YOLO11n 的 ONNX 导出和 Android 原型；C++ 模型推理与量化仍未实现。
 
 ---
 
@@ -252,7 +254,7 @@ Runo 当前主要是一个 **AI Engineering Playground**。
 
 ## 📍 Current Status
 
-**当前阶段：v0.2 — Hello YOLO（实验阶段，并非正式发布版本）**
+**当前阶段：李子检测移动端原型（已在 Android 真机跑通，误检待解决）**
 
 目前已经完成：
 
@@ -264,11 +266,7 @@ Runo 当前主要是一个 **AI Engineering Playground**。
 
 `PlantDoc / 自采标注 → COCO → PyTorch 检测训练 → 评估 → 图片预测`
 
-下一阶段：
-
-**验证蜂糖李真实数据，并打通模型部署。**
-
-`蜂糖李标注 → 训练与评估 → 导出与算子验证 → C++ → Android`
+下一阶段：记录真机误检样例并核对预处理、模型输出和置信度阈值；用目标果园数据评估，再决定补充数据和重训方案。病害识别仍需要病害类别及位置标注。当前 Android 推理链路已打通，无须先实现 C++ 推理模块。
 
 ---
 
